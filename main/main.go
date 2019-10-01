@@ -11,26 +11,29 @@ import (
 )
 
 //TODO: For now store users and chats in global variables but
-//		should move them to a db later.
+//should move them to a db later.
 var users = make(map[string]bool)
 var chats = make(map[string][]*websocket.Conn)
 
+//used to upgrade the http server connection to the Websocket protocol 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-//Handler function for the route: /chats
+//Handler function for the route: "/chats"
+//Only works for GET method
 func getChats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest) 
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		io.WriteString(w, "Bad request.")
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	//otherwise send the keys from the global chats map
+	w.WriteHeader(http.StatusOK) 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	b := new(bytes.Buffer)
 	for key, _ := range chats {
@@ -76,7 +79,7 @@ func connect(w http.ResponseWriter, r *http.Request) {
 // and returns false otherwise.
 func addUser(user string) bool {
 	if _, exists := users[user]; exists {
-		//that user name is already being used
+		//that username is already being used
 		log.Println("Failed to add user: Username already exists.")
 		return false
 	}
