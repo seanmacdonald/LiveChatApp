@@ -1,34 +1,33 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"io"
-	"bytes"
 
 	"github.com/gorilla/websocket"
 )
 
-//TODO: For now store users and chats in global variables but 
-//		should move them to a db later. 
-var users = make([]string, 0)
+//TODO: For now store users and chats in global variables but
+//		should move them to a db later.
+var users = make(map[string]bool)
 var chats = make(map[string][]*websocket.Conn)
-
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
 func getChats(w http.ResponseWriter, r *http.Request) {
-	if r.Method !=  "GET" {
+	if r.Method != "GET" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		io.WriteString(w, "Bad request.")
-		return 
-	} 
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -36,9 +35,9 @@ func getChats(w http.ResponseWriter, r *http.Request) {
 	for key, _ := range chats {
 		fmt.Fprintf(b, "%s\n", key)
 	}
-	
+
 	io.WriteString(w, b.String())
-	
+
 }
 
 func connect(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +48,10 @@ func connect(w http.ResponseWriter, r *http.Request) {
 	var user string
 	if val, ok := r.Form["user"]; ok {
 		user = val[0]
-		addUser(user)
+		if added := addUser(user); !added {
+			//username already exists so exit method
+			return
+		}
 	} else {
 		log.Println("Error getting username from request")
 		return
@@ -67,9 +69,19 @@ func connect(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func addUser(user string) {
-	users = append(users, user)
+// Returns true if the user was successfully added to the user list
+// and returns false otherwise.
+func addUser(user string) bool {
+	if _, exists := users[user]; exists {
+		//that user name is already being used
+		log.Println("Failed to add user: Username already exists.")
+		return false
+	}
+
+	//otherwise username can be added to the map of users
+	users[user] = true
 	log.Println("Current users:", users)
+	return true
 }
 
 func addChat(chat_name string, conn *websocket.Conn) {
@@ -90,7 +102,10 @@ func handleChat(conn *websocket.Conn) {
 func main() {
 	fmt.Println("Starting LiveChatApp...")
 
+	//setup handlers
 	http.HandleFunc("/connect", connect)
 	http.HandleFunc("/chats", getChats)
+
+	//start the server
 	http.ListenAndServe(":8080", nil)
 }
