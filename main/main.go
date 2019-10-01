@@ -21,6 +21,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
+//Handler function for the route: /chats
 func getChats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -40,6 +41,8 @@ func getChats(w http.ResponseWriter, r *http.Request) {
 
 }
 
+//Handler function for setting up the websocket connection for
+//the route: "/connect"
 func connect(w http.ResponseWriter, r *http.Request) {
 	//Firt get the username from the request
 	if err := r.ParseForm(); err != nil {
@@ -65,7 +68,7 @@ func connect(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("Server has a new connection to user named:", user)
 
-	handleChat(conn)
+	handleChat(user, conn)
 
 }
 
@@ -84,7 +87,8 @@ func addUser(user string) bool {
 	return true
 }
 
-func addChat(chat_name string, conn *websocket.Conn) {
+//Attempts to create a new chat group
+func addChatGroup(chat_name string, conn *websocket.Conn) {
 	if _, exists := chats[chat_name]; exists {
 		log.Println("Chat name alreay exists...")
 		return
@@ -95,8 +99,40 @@ func addChat(chat_name string, conn *websocket.Conn) {
 	chats[chat_name] = conns
 }
 
-func handleChat(conn *websocket.Conn) {
+//Handles incoming and outgoing messages for a particular user.
+func handleChat(user string, conn *websocket.Conn) {
+	read_chan := make(chan string)
+	go readMessage(user, read_chan, conn)
 
+	for {
+		select {
+		case incomingMsg, ok := <-read_chan:
+			if !ok {
+				return
+			}
+			fmt.Println(incomingMsg)
+		}
+	}
+}
+
+//Waits for incoming messages from a user and then forwards
+//them through a channel to the chat handler method of that
+//particular user
+func readMessage(user string, read_chan chan string, conn *websocket.Conn) {
+	defer close(read_chan)
+
+	for {
+		msgType, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Connection to client is over...")
+			log.Println(err)
+			return
+		} else {
+			if msgType == 1 {
+				read_chan <- user + ": " + string(p)
+			}
+		}
+	}
 }
 
 func main() {
@@ -105,6 +141,9 @@ func main() {
 	//setup handlers
 	http.HandleFunc("/connect", connect)
 	http.HandleFunc("/chats", getChats)
+
+	//add a test chat
+	chats["test"] = nil
 
 	//start the server
 	http.ListenAndServe(":8080", nil)
