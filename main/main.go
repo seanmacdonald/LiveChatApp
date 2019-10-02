@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -13,7 +14,9 @@ import (
 //TODO: For now store users and chats in global variables but
 //should move them to a db later.
 var users = make(map[string]bool)
-var chats = make(map[string][]*websocket.Conn)
+
+type connSlice []*websocket.Conn
+var chats = make(map[string]*connSlice)
 
 //used to upgrade the http server connection to the Websocket protocol 
 var upgrader = websocket.Upgrader{
@@ -97,13 +100,25 @@ func addChatGroup(chat_name string, conn *websocket.Conn) {
 		return
 	}
 
-	conns := make([]*websocket.Conn, 1)
+	/*conns := make([]*websocket.Conn, 1)
 	conns[0] = conn
-	chats[chat_name] = conns
+	chats[chat_name] = conns*/
 }
 
 //Handles incoming and outgoing messages for a particular user.
 func handleChat(user string, conn *websocket.Conn) {
+	//TODO: Delete this code that adds each conn to the 
+	//test chat later. It is just for testing purposes at 
+	//the moment 
+	var conns connSlice
+	//var cs []*websocket.Conn
+	conns = *chats["test"]
+	//cs = conns
+	fmt.Println("BEFORE", conns)
+	conns = append(conns, conn)
+	chats["test"] = &conns
+	fmt.Println("AFTER", conns)
+
 	read_chan := make(chan string)
 	go readMessage(user, read_chan, conn)
 
@@ -113,6 +128,8 @@ func handleChat(user string, conn *websocket.Conn) {
 			if !ok {
 				return
 			}
+
+			broadcastMessage(user, incomingMsg)
 			fmt.Println(incomingMsg)
 		}
 	}
@@ -132,10 +149,36 @@ func readMessage(user string, read_chan chan string, conn *websocket.Conn) {
 			return
 		} else {
 			if msgType == 1 {
-				read_chan <- user + ": " + string(p)
+				read_chan <- string(p)
 			}
 		}
 	}
+}
+
+//Send the message to all connections that are in the slice 
+//mapped to by the chat which is parsed from the msg itself 
+func broadcastMessage(user string, msg string) {
+	//parse which chat 
+	var chat string
+	if idx := strings.IndexByte(msg, ':'); idx >= 0 {
+		chat = msg[:idx]
+		fmt.Println("chat: ", chat)
+	} else {
+		log.Println("Error: Could not get chat name from message")
+		return 
+	}
+
+	//iterate through all the connections and send all the messages 
+	conns := *chats[chat]
+	fmt.Println("I am here")
+	fmt.Println(conns)
+	for _, conn := range conns {
+		if err := conn.WriteMessage(1, []byte(user + ": " + msg)); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
 }
 
 func main() {
@@ -146,7 +189,10 @@ func main() {
 	http.HandleFunc("/chats", getChats)
 
 	//add a test chat
-	chats["test"] = nil
+	var conns connSlice
+	cs := make([]*websocket.Conn, 0)
+	conns = cs
+	chats["test"] = &conns
 
 	//start the server
 	http.ListenAndServe(":8080", nil)
