@@ -98,9 +98,9 @@ func addChatGroup(chat_name string, conn *websocket.Conn) {
 		return
 	}
 
-	/*conns := make([]*websocket.Conn, 1)
+	conns := make([]*websocket.Conn, 1)
 	conns[0] = conn
-	chats[chat_name] = conns*/
+	chats[chat_name] = conns
 }
 
 //Handles incoming and outgoing messages for a particular user.
@@ -108,14 +108,9 @@ func handleChat(user string, conn *websocket.Conn) {
 	//TODO: Delete this code that adds each conn to the 
 	//test chat later. It is just for testing purposes at 
 	//the moment 
-	//var conns connSlice
-	//var cs []*websocket.Conn
 	conns := chats["test"]
-	//cs = conns
-	fmt.Println("BEFORE", conns)
 	conns = append(conns, conn)
 	chats["test"] = conns
-	fmt.Println("AFTER", conns)
 
 	read_chan := make(chan string)
 	go readMessage(user, read_chan, conn)
@@ -168,8 +163,6 @@ func broadcastMessage(user string, msg string) {
 
 	//iterate through all the connections and send all the messages 
 	conns := chats[chat]
-	fmt.Println("I am here")
-	fmt.Println(conns)
 	for _, conn := range conns {
 		if err := conn.WriteMessage(1, []byte(user + ": " + msg)); err != nil {
 			fmt.Println(err)
@@ -187,9 +180,8 @@ func main() {
 	http.HandleFunc("/chats", getChats)
 
 	//add a test chat
-	//var conns connSlice
+	//TODO: delete this once a chat can be added another way 
 	cs := make([]*websocket.Conn, 0)
-	//conns = cs
 	chats["test"] = cs
 
 	//start the server
