@@ -5,7 +5,7 @@ import (
 	"strings"
 	"fmt"
 
-	//"github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 	"github.com/seanmacdonald/LiveChatApp/data"
 )
 
@@ -15,7 +15,7 @@ import (
 //	3: Join existing chat in form ::<chat_name>
 //	4: Delete existing chat in form :::<chat_name>  
 //NOTE: a chat name CANNONT be an empty string. 
-func HandleMessage(user string, msg string, chat_info *data.ChatData) {
+func HandleMessage(user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
 	//first figure out how many semicolons are in a row 
 	count := 0 
 	for _, char := range msg {
@@ -32,6 +32,7 @@ func HandleMessage(user string, msg string, chat_info *data.ChatData) {
 		broadcastMessage(user, msg, chat_info)
 	case 1: 
 		log.Println("Make new chat case")
+		createChat(count, user, msg, conn, chat_info)
 	case 2: 
 		log.Println("Join existing chat case")
 	case 3: 
@@ -65,4 +66,9 @@ func broadcastMessage(user string, msg string, chat_info *data.ChatData) {
 			return
 		}
 	}
+}
+
+func createChat(pos int, user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
+	chat_name := msg[pos:]
+	data.AddChatGroup(chat_name, conn, chat_info)
 }

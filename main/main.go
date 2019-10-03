@@ -97,7 +97,7 @@ func handleChat(user string, conn *websocket.Conn) {
 				return
 			}
 
-			msgh.HandleMessage(user, incomingMsg, &chat_info)
+			msgh.HandleMessage(user, incomingMsg, conn, &chat_info)
 		}
 	}
 }
