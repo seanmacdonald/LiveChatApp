@@ -123,7 +123,6 @@ func handleChat(user string, conn *websocket.Conn) {
 			}
 
 			broadcastMessage(user, incomingMsg)
-			fmt.Println(incomingMsg)
 		}
 	}
 }
@@ -153,9 +152,11 @@ func readMessage(user string, read_chan chan string, conn *websocket.Conn) {
 func broadcastMessage(user string, msg string) {
 	//parse which chat 
 	var chat string
+	var parsedMsg string
 	if idx := strings.IndexByte(msg, ':'); idx >= 0 {
-		chat = msg[:idx]
-		fmt.Println("chat: ", chat)
+		chat = strings.TrimSpace(msg[:idx])
+		parsedMsg = strings.TrimSpace(msg[(idx+1):])
+		log.Println("Broadcasting to", chat + ":", parsedMsg )
 	} else {
 		log.Println("Error: Could not get chat name from message")
 		return 
@@ -164,7 +165,7 @@ func broadcastMessage(user string, msg string) {
 	//iterate through all the connections and send all the messages 
 	conns := chats[chat]
 	for _, conn := range conns {
-		if err := conn.WriteMessage(1, []byte(user + ": " + msg)); err != nil {
+		if err := conn.WriteMessage(1, []byte(user + ": " + parsedMsg)); err != nil {
 			fmt.Println(err)
 			return
 		}
