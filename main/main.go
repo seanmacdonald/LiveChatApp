@@ -129,7 +129,7 @@ func readMessage(user string, read_chan chan string, conn *websocket.Conn) {
 			log.Println(err)
 
 			//remove the username so it can be used by someone else later on
-			removeUser(user, conn)
+			data.RemoveUser(user, conn, &chat_info)
 			return
 		} else {
 			if msgType == 1 {
@@ -163,26 +163,6 @@ func broadcastMessage(user string, msg string) {
 		}
 	}
 
-}
-
-func removeUser(user string, conn *websocket.Conn) {
-	//first remove user from users map 
-	delete(chat_info.Users, user)
-
-	//next remove all the corresponding conn object from all chats 
-	for chat_name, _ := range chat_info.Chats {
-		conn_slice := chat_info.Chats[chat_name]
-
-		i := getPos(conn_slice, conn)
-
-		if i >= 0 {
-			//then remove it from this slice 
-			conn_slice[i] = conn_slice[len(conn_slice)-1] 
-			conn_slice[len(conn_slice)-1] = nil  
-			conn_slice = conn_slice[:len(conn_slice)-1]
-			chat_info.Chats[chat_name] = conn_slice
-		}
-	}	
 }
 
 func getPos(s []*websocket.Conn, conn *websocket.Conn) int {

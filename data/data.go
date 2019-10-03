@@ -27,14 +27,14 @@ func AddUser(user string, chat_info *ChatData) bool {
 	return true
 }
 
-/*
-func RemoveUser(user string, conn *websocket.Conn) {
+
+func RemoveUser(user string, conn *websocket.Conn, chat_info *ChatData) {
 	//first remove user from users map 
-	delete(users, user)
+	delete(chat_info.Users, user)
 
 	//next remove all the corresponding conn object from all chats 
-	for chat_name, _ := range chats {
-		conn_slice := chats[chat_name]
+	for chat_name, _ := range chat_info.Chats {
+		conn_slice := chat_info.Chats[chat_name]
 
 		i := getPos(conn_slice, conn)
 
@@ -43,10 +43,10 @@ func RemoveUser(user string, conn *websocket.Conn) {
 			conn_slice[i] = conn_slice[len(conn_slice)-1] 
 			conn_slice[len(conn_slice)-1] = nil  
 			conn_slice = conn_slice[:len(conn_slice)-1]
-			chats[chat_name] = conn_slice
+			chat_info.Chats[chat_name] = conn_slice
 		}
 	}	
-}*/
+}
 
 func getPos(s []*websocket.Conn, conn *websocket.Conn) int {
     for i, val := range s {
