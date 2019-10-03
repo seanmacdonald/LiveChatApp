@@ -12,13 +12,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//TODO: For now store users and chats in global variables but
+//TODO: For now store users and chats in global variable but
 //should move them to a db later.
-//var users = make(map[string]bool)
-//var chats = make(map[string][]*websocket.Conn)
-
 var chat_info data.ChatData
-
 
 //used to upgrade the http server connection to the Websocket protocol 
 var upgrader = websocket.Upgrader{
@@ -61,7 +57,7 @@ func connect(w http.ResponseWriter, r *http.Request) {
 	var user string
 	if val, ok := r.Form["user"]; ok {
 		user = val[0]
-		if added := addUser(user); !added {
+		if added := data.AddUser(user, &chat_info); !added {
 			//username already exists so exit method
 			return
 		}
@@ -80,21 +76,6 @@ func connect(w http.ResponseWriter, r *http.Request) {
 
 	handleChat(user, conn)
 
-}
-
-// Returns true if the user was successfully added to the user list
-// and returns false otherwise.
-func addUser(user string) bool {
-	if _, exists := chat_info.Users[user]; exists {
-		//that username is already being used
-		log.Println("Failed to add user: Username already exists.")
-		return false
-	}
-
-	//otherwise username can be added to the map of users
-	chat_info.Users[user] = true
-	log.Println("Current users:", chat_info.Users)
-	return true
 }
 
 //Attempts to create a new chat group
