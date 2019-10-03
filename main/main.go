@@ -97,8 +97,41 @@ func handleChat(user string, conn *websocket.Conn) {
 				return
 			}
 
-			broadcastMessage(user, incomingMsg)
+			handleMessage(user, incomingMsg)
 		}
+	}
+}
+
+
+//Figures out what the incoming message is for. There are 4 cases: 
+//	1: Broadcast message in form <chat_name>:<user_name>:<msg>
+//	2: Make new chat in form :<chat_name>
+//	3: Join existing chat in form ::<chat_name>
+//	4: Delete existing chat in form :::<chat_name>  
+//NOTE: a chat name CANNONT be an empty string. 
+func handleMessage(user string, msg string) {
+	//first figure out how many semicolons are in a row 
+	count := 0 
+	for _, char := range msg {
+		if char != ':' {
+			break
+		}
+		count++
+	}
+
+	//note that count corresponds to the index where chat_name starts in the message 
+	switch count {
+	case 0: 
+		log.Println("Broadcast case")
+		broadcastMessage(user, msg)
+	case 1: 
+		log.Println("Make new chat case")
+	case 2: 
+		log.Println("Join existing chat case")
+	case 3: 
+		log.Println("Delete existing chat case")
+	default: 
+		log.Println("Error parsing message")
 	}
 }
 
