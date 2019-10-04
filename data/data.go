@@ -73,3 +73,36 @@ func AddChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData) b
 	chat_info.Chats[chat_name] = conns
 	return true
 }
+
+//Removes the given conn from the chat group. If the chat group is now 
+//empty then the chat is also deleted.
+func LeaveChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData) bool {
+	if _, exists := chat_info.Chats[chat_name]; !exists {
+		log.Println("Chat name does not exist...")
+		return false
+	}
+
+	conn_slice := chat_info.Chats[chat_name]
+	i := getPos(conn_slice, conn)
+
+	if i >= 0 {
+		//then remove it from this slice
+		conn_slice[i] = conn_slice[len(conn_slice)-1]
+		conn_slice[len(conn_slice)-1] = nil
+		conn_slice = conn_slice[:len(conn_slice)-1]
+		chat_info.Chats[chat_name] = conn_slice
+	}
+
+	//now check if the slice len is still greater than 0 
+	if len(conn_slice) <= 0 {
+		deleteChatGroup(chat_name, chat_info)
+	}
+
+	return true; 
+}
+
+//Deletes the specified chat group from the given Chats map 
+func deleteChatGroup(chat_name string, chat_info *ChatData) {
+	delete(chat_info.Chats, chat_name)
+	log.Println("Deleted chat group:", chat_name)
+}

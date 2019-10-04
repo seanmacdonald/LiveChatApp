@@ -36,7 +36,8 @@ func HandleMessage(user string, msg string, conn *websocket.Conn, chat_info *dat
 	case 2: 
 		log.Println("Join existing chat case")
 	case 3: 
-		log.Println("Delete existing chat case")
+		log.Println("Leave existing chat case")
+		leaveChat(count, user, msg, conn, chat_info)
 	default: 
 		log.Println("Error parsing message")
 	}
@@ -71,4 +72,9 @@ func broadcastMessage(user string, msg string, chat_info *data.ChatData) {
 func createChat(pos int, user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
 	chat_name := msg[pos:]
 	data.AddChatGroup(chat_name, conn, chat_info)
+}
+
+func leaveChat(pos int, user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
+	chat_name := msg[pos:]
+	data.LeaveChatGroup(chat_name, conn, chat_info)
 }
