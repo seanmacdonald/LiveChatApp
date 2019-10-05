@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"github.com/seanmacdonald/LiveChatApp/data"
@@ -56,6 +57,11 @@ func connect(w http.ResponseWriter, r *http.Request) {
 	var user string
 	if val, ok := r.Form["user"]; ok {
 		user = val[0]
+		if valid := validUserName(user); !valid{
+			log.Println("Username cannont have colons", user)
+			return 
+		} 
+
 		if added := data.AddUser(user, &chat_info); !added {
 			//username already exists so exit method
 			return
@@ -74,6 +80,14 @@ func connect(w http.ResponseWriter, r *http.Request) {
 	log.Println("Server has a new connection to user named:", user)
 
 	handleChat(user, conn)
+}
+
+func validUserName(user string) bool {
+	if hasCol := strings.Contains(user, ":"); hasCol {
+		return false
+	} 
+
+	return true
 }
 
 //Handles incoming and outgoing messages for a particular user.
