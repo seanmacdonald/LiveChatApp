@@ -15,7 +15,7 @@ import (
 //	2: Make new chat in form 2<chat_name>
 //	3: Join existing chat in form 3<chat_name>
 //	4: Delete existing chat in form 4<chat_name>  
-//NOTE: a chat name CANNONT be an empty string. 
+//NOTE: a chat name CANNONT be an empty string nor have semi colons  
 func HandleMessage(user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
 	//get first character of msg which is the case identifier 
 	var count int
@@ -24,19 +24,21 @@ func HandleMessage(user string, msg string, conn *websocket.Conn, chat_info *dat
 	}
 
 	parsedMsg := msg[1:]
+	parsedMsg = strings.TrimSpace(parsedMsg)
 
 	//note that count corresponds to the index where chat_name starts in the message 
 	switch count {
 	case 1: 
-		log.Println("Broadcast message")
+		log.Println("C1 Broadcast message")
 		broadcastMessage(user, parsedMsg, chat_info)
 	case 2: 
-		log.Println("Make new chat:", parsedMsg)
+		log.Println("C2 Make new chat:", parsedMsg)
 		createChat(user, parsedMsg, conn, chat_info)
 	case 3: 
-		log.Println("Join existing chat:", parsedMsg)
+		log.Println("C3 Join existing chat:", parsedMsg)
+		joinChat(user, parsedMsg, conn, chat_info)
 	case 4: 
-		log.Println("Leave existing chat:", parsedMsg)
+		log.Println("C4 Leave existing chat:", parsedMsg)
 		leaveChat(user, parsedMsg, conn, chat_info)
 	default: 
 		log.Println("Error parsing message")
@@ -70,11 +72,28 @@ func broadcastMessage(user string, msg string, chat_info *data.ChatData) {
 }
 
 func createChat(user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
-	//msg is the chat name 
-	data.AddChatGroup(msg, conn, chat_info)
+	//msg is the chat name
+	if hasCol := strings.Contains(msg, ":"); !hasCol {
+		data.AddChatGroup(msg, conn, chat_info)
+	} else {
+		log.Println("Invalid chat name because of colon", msg)
+	}
+}
+
+func joinChat(user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
+	//msg us the chat name 
+	if hasCol := strings.Contains(msg, ":"); !hasCol {
+		data.JoinChatGroup(user, msg, conn, chat_info)
+	} else {
+		log.Println("Invalid chat name because of colon", msg)
+	}
 }
 
 func leaveChat(user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
 	//msg is the chat name
-	data.LeaveChatGroup(msg, conn, chat_info)
+	if hasCol := strings.Contains(msg, ":"); !hasCol {
+		data.LeaveChatGroup(msg, conn, chat_info)
+	} else {
+		log.Println("Invalid chat name because of colon", msg)
+	}
 }

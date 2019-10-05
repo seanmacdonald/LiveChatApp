@@ -64,7 +64,7 @@ func getPos(s []*websocket.Conn, conn *websocket.Conn) int {
 //name already exits. Returns true if successful and false otherwise.
 func AddChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData) bool {
 	if _, exists := chat_info.Chats[chat_name]; exists {
-		log.Println("Chat name alreay exists...")
+		log.Println("Chat alreay exists:", chat_name)
 		return false
 	}
 
@@ -74,11 +74,31 @@ func AddChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData) b
 	return true
 }
 
+func JoinChatGroup(user string, chat_name string, conn *websocket.Conn, chat_info *ChatData) bool{
+	if _, exists := chat_info.Chats[chat_name]; !exists {
+		log.Println("Can't join because chat does not exist:", chat_name)
+		return false
+	}
+
+	//otherwise we add the users conn to the chat 
+	conn_slice := chat_info.Chats[chat_name]
+	i := getPos(conn_slice, conn)
+
+	if i >= 0 {
+		log.Println("Conn is already in the chat for:", user)
+		return true 
+	}
+
+	conn_slice = append(conn_slice, conn)
+	chat_info.Chats[chat_name] = conn_slice
+	return true
+}
+
 //Removes the given conn from the chat group. If the chat group is now 
 //empty then the chat is also deleted.
 func LeaveChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData) bool {
 	if _, exists := chat_info.Chats[chat_name]; !exists {
-		log.Println("Chat name does not exist...")
+		log.Println("Cannot leave chat because it doesn't exist:", chat_name)
 		return false
 	}
 
