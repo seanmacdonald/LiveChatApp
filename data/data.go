@@ -31,7 +31,7 @@ func AddUser(user string, chat_info *ChatData) bool {
 //part of the ChatData struct
 func RemoveUser(user string, conn *websocket.Conn, chat_info *ChatData) {
 	//TODO: delete the users conn from any chat groups they are in 
-	deleteUserFromChats()
+	deleteUserFromChats(user, conn, chat_info)
 
 	//first remove user from users map
 	delete(chat_info.Users, user)
@@ -65,15 +65,19 @@ func getPos(s []*websocket.Conn, conn *websocket.Conn) int {
 
 //Attempts to create a new chat group. First checks to see if the chat
 //name already exits. Returns true if successful and false otherwise.
-func AddChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData) bool {
+func AddChatGroup(user_name string, chat_name string, conn *websocket.Conn, chat_info *ChatData) bool {
 	if _, exists := chat_info.Chats[chat_name]; exists {
 		log.Println("Chat alreay exists:", chat_name)
 		return false
 	}
 
+	//add conn to the slice of conns in the chat (first make the slice)
 	conns := make([]*websocket.Conn, 1)
 	conns[0] = conn
 	chat_info.Chats[chat_name] = conns
+
+	//add chat to user's chat list 
+	addChat(user_name, chat_name, chat_info)
 	return true
 }
 
@@ -92,14 +96,18 @@ func JoinChatGroup(user string, chat_name string, conn *websocket.Conn, chat_inf
 		return true 
 	}
 
+	//add conn to slice of conns
 	conn_slice = append(conn_slice, conn)
 	chat_info.Chats[chat_name] = conn_slice
+
+	//add chat name to list of user's chats 
+	addChat(user, chat_name, chat_info)
 	return true
 }
 
 //Removes the given conn from the chat group. If the chat group is now 
 //empty then the chat is also deleted.
-func LeaveChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData) bool {
+func LeaveChatGroup(user_name string, chat_name string, conn *websocket.Conn, chat_info *ChatData) bool {
 	if _, exists := chat_info.Chats[chat_name]; !exists {
 		log.Println("Cannot leave chat because it doesn't exist:", chat_name)
 		return false
@@ -114,9 +122,13 @@ func LeaveChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData)
 		conn_slice[len(conn_slice)-1] = nil
 		conn_slice = conn_slice[:len(conn_slice)-1]
 		chat_info.Chats[chat_name] = conn_slice
+
+		removeChat(user_name, chat_name, chat_info)
+	} else {
+		log.Println("Nothing to remove: Conn not in this slice.")
 	}
 
-	//now check if the slice len is still greater than 0 
+	//if there is no user left then delete the chat entirely 
 	if len(conn_slice) <= 0 {
 		deleteChatGroup(chat_name, chat_info)
 	}
@@ -132,6 +144,54 @@ func deleteChatGroup(chat_name string, chat_info *ChatData) {
 
 //Deletes the user all user conn objects from each of the chats
 //that the user is in. 
-func deleteUserFromChats() {
-	log.Println("TODO: implement delete from all chats")
+func deleteUserFromChats(user string, conn *websocket.Conn, chat_info *ChatData) {
+	for _, chat_name := range chat_info.Users[user] {
+		LeaveChatGroup(user, chat_name, conn, chat_info)
+	} 
+}
+
+
+//Adds the chat string to the user's corresponding slice in ChatData struct 
+func addChat(user string, chat string, chat_info *ChatData) bool {
+	chats := chat_info.Users[user]
+	i := getChatPos(chats, chat)
+
+	if i >= 0 {
+		//then the chat already exists for the user 
+		log.Println("Did not add chat because it is already there")
+		return false 
+	}
+
+	//otherwise add the chat 
+	chats = append(chats, chat)
+	chat_info.Users[user] = chats
+	return true 
+}
+
+//Removes the chat string from the user's corresponding slice in ChatData structure
+func removeChat(user string, chat string, chat_info *ChatData) bool {
+	chats := chat_info.Users[user]
+	i := getChatPos(chats, chat)
+	if i < 0 {
+		//then the chat is not in the slice already 
+		log.Println("Did not delte chat because it is not in slice")
+		return false 
+	}
+
+	//otherwise remove the chat
+	chats[i] = chats[len(chats)-1]
+	chats[len(chats)-1] = ""
+	chats = chats[:len(chats)-1]
+	chat_info.Users[user] = chats
+
+	return true
+}
+
+func getChatPos(s []string, conn string) int {
+	for i, val := range s {
+		if val == conn {
+			return i
+		}
+	}
+	return -1
 }

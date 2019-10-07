@@ -74,7 +74,7 @@ func broadcastMessage(user string, msg string, chat_info *data.ChatData) {
 func createChat(user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
 	//msg is the chat name
 	if hasCol := strings.Contains(msg, ":"); !hasCol {
-		data.AddChatGroup(msg, conn, chat_info)
+		data.AddChatGroup(user, msg, conn, chat_info)
 	} else {
 		log.Println("Invalid chat name because of colon", msg)
 	}
@@ -92,7 +92,7 @@ func joinChat(user string, msg string, conn *websocket.Conn, chat_info *data.Cha
 func leaveChat(user string, msg string, conn *websocket.Conn, chat_info *data.ChatData) {
 	//msg is the chat name
 	if hasCol := strings.Contains(msg, ":"); !hasCol {
-		data.LeaveChatGroup(msg, conn, chat_info)
+		data.LeaveChatGroup(user, msg, conn, chat_info)
 	} else {
 		log.Println("Invalid chat name because of colon", msg)
 	}
