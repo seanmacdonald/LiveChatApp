@@ -147,7 +147,7 @@ func main() {
 	http.HandleFunc("/chats", getChats)
 
 	//setup chat info
-	chat_info.Users = make(map[string]bool)
+	chat_info.Users = make(map[string][]string)
 	chat_info.Chats = make(map[string][]*websocket.Conn)
 
 	//add a test chat

@@ -7,7 +7,7 @@ import (
 )
 
 type ChatData struct {
-	Users map[string]bool
+	Users map[string][]string
 	Chats map[string][]*websocket.Conn
 }
 
@@ -21,7 +21,7 @@ func AddUser(user string, chat_info *ChatData) bool {
 	}
 
 	//otherwise username can be added to the map of users
-	chat_info.Users[user] = true
+	chat_info.Users[user] = make([]string, 0, 5) 
 	//log.Println("Current users:", chat_info.Users)
 	return true
 }
@@ -30,6 +30,9 @@ func AddUser(user string, chat_info *ChatData) bool {
 //websocket connection objects in the Chats map which are both
 //part of the ChatData struct
 func RemoveUser(user string, conn *websocket.Conn, chat_info *ChatData) {
+	//TODO: delete the users conn from any chat groups they are in 
+	deleteUserFromChats()
+
 	//first remove user from users map
 	delete(chat_info.Users, user)
 
@@ -125,4 +128,10 @@ func LeaveChatGroup(chat_name string, conn *websocket.Conn, chat_info *ChatData)
 func deleteChatGroup(chat_name string, chat_info *ChatData) {
 	delete(chat_info.Chats, chat_name)
 	log.Println("Deleted chat group:", chat_name)
+}
+
+//Deletes the user all user conn objects from each of the chats
+//that the user is in. 
+func deleteUserFromChats() {
+	log.Println("TODO: implement delete from all chats")
 }
