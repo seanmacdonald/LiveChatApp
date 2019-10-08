@@ -174,7 +174,7 @@ func removeChat(user string, chat string, chat_info *ChatData) bool {
 	i := getChatPos(chats, chat)
 	if i < 0 {
 		//then the chat is not in the slice already 
-		log.Println("Did not delte chat because it is not in slice")
+		log.Println("Did not delete chat because it is not in slice")
 		return false 
 	}
 
