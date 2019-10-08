@@ -30,7 +30,7 @@ func AddUser(user string, chat_info *ChatData) bool {
 //websocket connection objects in the Chats map which are both
 //part of the ChatData struct
 func RemoveUser(user string, conn *websocket.Conn, chat_info *ChatData) {
-	//TODO: delete the users conn from any chat groups they are in 
+	//delete the user's conn from any chat groups they are in 
 	deleteUserFromChats(user, conn, chat_info)
 
 	//first remove user from users map

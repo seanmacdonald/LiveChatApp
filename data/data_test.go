@@ -90,6 +90,48 @@ func TestRemoveChat(t *testing.T) {
 
 }
 
+//TEST AddUser function 
+func TestAddUser(t *testing.T) {
+	var chat_info ChatData
+	setUp(&chat_info)
+
+	//try to add already existing user 
+	success := AddUser("user1", &chat_info)
+	if _, ok := chat_info.Users["user1"]; !ok {
+		t.Errorf("user1 does not exist in users map for some reason")
+	} else if success != false {
+		t.Errorf("Method should not return true when the user was already in the map")
+	}
+
+	//try adding a new user 
+	success = AddUser("newuser", &chat_info)
+	if _, ok := chat_info.Users["newuser"]; !ok {
+		t.Errorf("newuser was not added to the map")
+	} else if success != true {
+		t.Errorf("Method should return true if the addition was successful")
+	}
+}
+
+func TestRemoveUser(t *testing.T) {
+	var chat_info ChatData
+	setUp(&chat_info)
+
+	//try removing a user that does not exist 
+	var conn *websocket.Conn
+	conn = nil  
+	RemoveUser("userDNE", conn, &chat_info)
+	if _, ok := chat_info.Users["userDNE"]; ok {
+		t.Errorf("userDNE is in the map")
+	}
+
+	//try removing user that does exist in map 
+	RemoveUser("user1", conn, &chat_info)
+	if _, ok := chat_info.Users["user1"]; ok {
+		t.Errorf("user1 is still in the map")
+	}
+	
+}
+
 //Helper method for setting up test data
 func setUp(chat_info *ChatData) {
 	chat_info.Users = make(map[string][]string)
