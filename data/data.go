@@ -191,9 +191,9 @@ func removeChat(user string, chat string, chat_info *ChatData) bool {
 //Helper method for finding the position of a chat
 //string in the slice it is contained in. Returns the position 
 //of the element if found and returns -1 if not found.
-func getChatPos(s []string, conn string) int {
+func getChatPos(s []string, chat string) int {
 	for i, val := range s {
-		if val == conn {
+		if val == chat {
 			return i
 		}
 	}

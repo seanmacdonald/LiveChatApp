@@ -94,6 +94,38 @@ func TestRemoveChat(t *testing.T) {
 
 }
 
+//Test getChatPos function 
+func TestGetChatPos(t *testing.T) {
+	chats := []string{"schools", "kitesurfing", "hockey", "another chat"}
+
+	//case 1: element is first in the slice 
+	var checkWith int 
+	checkWith = 0
+	if val := getChatPos(chats, "schools"); val != checkWith {
+		t.Errorf("The first chat was not found. \nGot: %v \nShould be: %v", val, checkWith)
+	}
+
+	//case 2: element is last in slice 
+	checkWith = 3
+	if val := getChatPos(chats, "another chat"); val != checkWith {
+		t.Errorf("The first chat was not found. \nGot: %v \nShould be: %v", val, checkWith)
+	}
+
+	//case 3: element is in middle of slice
+	checkWith = 1
+	if val := getChatPos(chats, "kitesurfing"); val != checkWith {
+		t.Errorf("The first chat was not found. \nGot: %v \nShould be: %v", val, checkWith)
+	}
+
+	//case 4: element does not exist in slice 
+	checkWith = -1
+	if val := getChatPos(chats, "this is not in list"); val != checkWith {
+		t.Errorf("The first chat was not found. \nGot: %v \nShould be: %v", val, checkWith)
+	}
+}
+
+
+
 /*
 	User related tests *******************************************
 */
