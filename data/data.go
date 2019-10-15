@@ -40,7 +40,7 @@ func RemoveUser(user string, conn *websocket.Conn, chat_info *ChatData) {
 	for chat_name, _ := range chat_info.Chats {
 		conn_slice := chat_info.Chats[chat_name]
 
-		i := getPos(conn_slice, conn)
+		i := getConnPos(conn_slice, conn)
 
 		if i >= 0 {
 			//then remove it from this slice
@@ -52,9 +52,10 @@ func RemoveUser(user string, conn *websocket.Conn, chat_info *ChatData) {
 	}
 }
 
-//Helper method for RemoveUser to find the position of the connection
-//object in the slice it is contained in
-func getPos(s []*websocket.Conn, conn *websocket.Conn) int {
+//Helper method for finding the position of a connection
+//object in the slice it is contained in. Returns the position 
+//of the element if found and returns -1 if not found.
+func getConnPos(s []*websocket.Conn, conn *websocket.Conn) int {
 	for i, val := range s {
 		if val == conn {
 			return i
@@ -89,7 +90,7 @@ func JoinChatGroup(user string, chat_name string, conn *websocket.Conn, chat_inf
 
 	//otherwise we add the users conn to the chat 
 	conn_slice := chat_info.Chats[chat_name]
-	i := getPos(conn_slice, conn)
+	i := getConnPos(conn_slice, conn)
 
 	if i >= 0 {
 		log.Println("Conn is already in the chat for:", user)
@@ -114,7 +115,7 @@ func LeaveChatGroup(user_name string, chat_name string, conn *websocket.Conn, ch
 	}
 
 	conn_slice := chat_info.Chats[chat_name]
-	i := getPos(conn_slice, conn)
+	i := getConnPos(conn_slice, conn)
 
 	if i >= 0 {
 		//then remove it from this slice
@@ -187,6 +188,9 @@ func removeChat(user string, chat string, chat_info *ChatData) bool {
 	return true
 }
 
+//Helper method for finding the position of a chat
+//string in the slice it is contained in. Returns the position 
+//of the element if found and returns -1 if not found.
 func getChatPos(s []string, conn string) int {
 	for i, val := range s {
 		if val == conn {

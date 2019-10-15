@@ -6,6 +6,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+/*
+	Chat related tests *******************************************
+*/
+
 //TEST addChat function
 func TestAddChat(t *testing.T) {
 	var chat_info ChatData
@@ -90,6 +94,10 @@ func TestRemoveChat(t *testing.T) {
 
 }
 
+/*
+	User related tests *******************************************
+*/
+
 //TEST AddUser function 
 func TestAddUser(t *testing.T) {
 	var chat_info ChatData
@@ -131,6 +139,11 @@ func TestRemoveUser(t *testing.T) {
 	}
 	
 }
+
+
+/*
+	Helper methods for test cases ******************************
+*/
 
 //Helper method for setting up test data
 func setUp(chat_info *ChatData) {
