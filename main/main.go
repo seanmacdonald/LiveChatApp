@@ -29,6 +29,8 @@ var upgrader = websocket.Upgrader{
 func getChats(w http.ResponseWriter, r *http.Request) {
 	chats := chat_info.Chats
 
+	enableCors(&w)
+
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -45,6 +47,11 @@ func getChats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	io.WriteString(w, b.String())
+}
+
+//Function to enables CORS for http get requests to the chats route
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 //Handler function for setting up the websocket connection for
