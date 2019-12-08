@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -24,6 +24,10 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
+type Chats struct {
+	Chats []string
+}
+
 //Handler function for the route: "/chats"
 //Only works for GET method
 func getChats(w http.ResponseWriter, r *http.Request) {
@@ -39,14 +43,21 @@ func getChats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//otherwise send the keys from the chats map
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	b := new(bytes.Buffer)
-	for key, _ := range chats {
-		fmt.Fprintf(b, "%s\n", key)
+	chats_keys := make([]string, 0, len(chats))
+	for k := range chats {
+		chats_keys = append(chats_keys, k)
 	}
 
-	io.WriteString(w, b.String())
+	all_chats := Chats{chats_keys}
+
+	js, err := json.Marshal(all_chats)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
 }
 
 //Function to enables CORS for http get requests to the chats route
@@ -64,10 +75,10 @@ func connect(w http.ResponseWriter, r *http.Request) {
 	var user string
 	if val, ok := r.Form["user"]; ok {
 		user = val[0]
-		if valid := validUserName(user); !valid{
+		if valid := validUserName(user); !valid {
 			log.Println("Username cannont have colons", user)
-			return 
-		} 
+			return
+		}
 
 		if added := data.AddUser(user, &chat_info); !added {
 			//username already exists so exit method
@@ -92,7 +103,7 @@ func connect(w http.ResponseWriter, r *http.Request) {
 func validUserName(user string) bool {
 	if hasCol := strings.Contains(user, ":"); hasCol {
 		return false
-	} 
+	}
 
 	return true
 }
